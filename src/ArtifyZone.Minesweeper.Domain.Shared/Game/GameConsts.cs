@@ -1,3 +1,5 @@
+using Volo.Abp;
+
 namespace ArtifyZone.Minesweeper.Game;
 
 public static class GameConsts
@@ -12,5 +14,11 @@ public static class GameConsts
 
     public const int MinMines = 4;
 
-    public const int MaxMines = MaxGameWidth * MaxGameHeight / 3;
+    public static int MaxMines(int width, int height)
+    {
+        Check.Range(width, nameof(width), MinGameWidth, MaxGameWidth);
+        Check.Range(height, nameof(height), MinGameHeight, MaxGameHeight);
+
+        return width * height / 3;
+    }
 }

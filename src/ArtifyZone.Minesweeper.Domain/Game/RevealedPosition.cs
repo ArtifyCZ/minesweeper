@@ -12,6 +12,4 @@ public class RevealedPosition : Entity<Guid>
     public int Y { get; set; }
 
     public int NeighborMines { get; set; }
-
-    public Game Game { get; set; }
 }

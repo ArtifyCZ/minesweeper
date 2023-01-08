@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
+using Volo.Abp.Application.Dtos;
 
 namespace ArtifyZone.Minesweeper.Game;
 
-public class GameDto
+public class GameDto : EntityDto<Guid>
 {
     public int Width { get; set; }
 
