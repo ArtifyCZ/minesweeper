@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ArtifyZone.Minesweeper.Game;
+using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore.Modeling;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
@@ -23,7 +25,50 @@ public class MinesweeperDbContext :
     IIdentityDbContext,
     ITenantManagementDbContext
 {
-    /* Add DbSet properties for your Aggregate Roots / Entities here. */
+    public MinesweeperDbContext(DbContextOptions<MinesweeperDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<Game.Game> Games { get; set; }
+
+    public DbSet<MinePosition> MinePositions { get; set; }
+
+    public DbSet<RevealedPosition> RevealedPositions { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        /* Include modules to your migration db context */
+
+        builder.ConfigurePermissionManagement();
+        builder.ConfigureSettingManagement();
+        builder.ConfigureBackgroundJobs();
+        builder.ConfigureAuditLogging();
+        builder.ConfigureIdentity();
+        builder.ConfigureOpenIddict();
+        builder.ConfigureFeatureManagement();
+        builder.ConfigureTenantManagement();
+
+        builder.Entity<Game.Game>(b =>
+        {
+            b.ToTable(MinesweeperConsts.DbTablePrefix + "Games", MinesweeperConsts.DbSchema);
+            b.ConfigureByConvention();
+        });
+
+        builder.Entity<MinePosition>(b =>
+        {
+            b.ToTable(MinesweeperConsts.DbTablePrefix + "MinePositions", MinesweeperConsts.DbSchema);
+            b.ConfigureByConvention();
+        });
+
+        builder.Entity<RevealedPosition>(b =>
+        {
+            b.ToTable(MinesweeperConsts.DbTablePrefix + "RevealedPositions", MinesweeperConsts.DbSchema);
+            b.ConfigureByConvention();
+        });
+    }
 
     #region Entities from the modules
 
@@ -51,35 +96,4 @@ public class MinesweeperDbContext :
     public DbSet<TenantConnectionString> TenantConnectionStrings { get; set; }
 
     #endregion
-
-    public MinesweeperDbContext(DbContextOptions<MinesweeperDbContext> options)
-        : base(options)
-    {
-
-    }
-
-    protected override void OnModelCreating(ModelBuilder builder)
-    {
-        base.OnModelCreating(builder);
-
-        /* Include modules to your migration db context */
-
-        builder.ConfigurePermissionManagement();
-        builder.ConfigureSettingManagement();
-        builder.ConfigureBackgroundJobs();
-        builder.ConfigureAuditLogging();
-        builder.ConfigureIdentity();
-        builder.ConfigureOpenIddict();
-        builder.ConfigureFeatureManagement();
-        builder.ConfigureTenantManagement();
-
-        /* Configure your own tables/entities inside here */
-
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(MinesweeperConsts.DbTablePrefix + "YourEntities", MinesweeperConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
-    }
 }
