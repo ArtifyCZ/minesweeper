@@ -29,6 +29,7 @@ public class GameManager : DomainService
         var flagged = new HashSet<MinePosition>();
 
         return Task.FromResult(new Game(this.GuidGenerator.Create(),
+            true,
             width,
             height,
             mines,
@@ -105,7 +106,7 @@ public class GameManager : DomainService
         return Task.CompletedTask;
     }
 
-    public async Task<RevealedPosition> RevealPosition(Game game, int x, int y)
+    public async Task<RevealedPosition> RevealPositionAsync(Game game, int x, int y)
     {
         if (game.Mines.Contains(new MinePosition(x, y)))
         {
@@ -128,6 +129,13 @@ public class GameManager : DomainService
             Mine = false,
             NeighborMines = minesAround
         };
+    }
+
+    public Task<bool> HasWonAsync(Game game)
+    {
+        return Task.FromResult(game.AvailableFlags == 0 && game.CorrectlyFlagged == game.Mines.Count
+                                                        && game.Height * game.Width - game.FlaggedMines.Count ==
+                                                        game.Revealed.Count);
     }
 
     private Task<IEnumerable<MinePosition>> NeighborPositions(int x, int y, int width, int height)

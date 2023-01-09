@@ -19,9 +19,14 @@ public class GameAppService : ApplicationService, IGameAppService
     public async Task<GameDto> GetAsync(Guid id)
     {
         var game = await this._games.GetAsync(id);
+
+        var won = await this._gameManager.HasWonAsync(game);
+
         return new GameDto
         {
             Id = game.Id,
+            Won = won,
+            Lost = game.Running == won,
             Height = game.Height,
             Width = game.Width,
             FlagsAvailable = game.AvailableFlags,
@@ -42,21 +47,32 @@ public class GameAppService : ApplicationService, IGameAppService
     {
         var game = await this._games.GetAsync(input.GameId);
 
-        var revealed = await this._gameManager.RevealPosition(game, input.X, input.Y);
+        if (!game.Running)
+        {
+            throw new NotImplementedException();
+        }
 
-        var won = game.CorrectlyFlagged == game.FlaggedMines.Count;
+        var revealed = await this._gameManager.RevealPositionAsync(game, input.X, input.Y);
+
+        var won = await this._gameManager.HasWonAsync(game);
 
         return new FlagGameStateChangeDto
         {
-            Lost = false,
-            Won = won
+            Won = won,
+            Lost = game.Running == won
         };
     }
 
     public async Task<RevealGameStateChangeDto> RevealAsync(RevealDto input)
     {
         var game = await this._games.GetAsync(input.GameId);
-        var revealed = await this._gameManager.RevealPosition(game, input.X, input.Y);
+
+        if (!game.Running)
+        {
+            throw new NotImplementedException();
+        }
+
+        var revealed = await this._gameManager.RevealPositionAsync(game, input.X, input.Y);
 
         var lost = false;
         var won = false;
@@ -66,7 +82,7 @@ public class GameAppService : ApplicationService, IGameAppService
             lost = true;
         }
 
-        // TODO: Write checking if won
+        won = await this._gameManager.HasWonAsync(game);
 
         return new RevealGameStateChangeDto
         {
