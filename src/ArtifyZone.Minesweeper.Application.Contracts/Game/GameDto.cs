@@ -10,5 +10,9 @@ public class GameDto : EntityDto<Guid>
 
     public int Height { get; set; }
 
+    public int FlagsAvailable { get; set; }
+
+    public ICollection<FlaggedPositionDto> Flagged { get; set; }
+
     public ICollection<RevealedPositionDto> Revealed { get; set; }
 }

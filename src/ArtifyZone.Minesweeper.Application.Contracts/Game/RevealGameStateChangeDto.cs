@@ -1,6 +1,6 @@
 namespace ArtifyZone.Minesweeper.Game;
 
-public class GameStateChangeDto
+public class RevealGameStateChangeDto
 {
     public bool Won { get; set; }
 

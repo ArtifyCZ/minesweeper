@@ -10,5 +10,7 @@ public interface IGameAppService : IApplicationService
 
     Task<GameDto> CreateAsync(CreateGameDto input);
 
-    Task<GameStateChangeDto> RevealAsync(RevealDto input);
+    Task<FlagGameStateChangeDto> FlagAsync(FlagDto input);
+
+    Task<RevealGameStateChangeDto> RevealAsync(RevealDto input);
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
 
@@ -18,7 +19,15 @@ public class GameAppService : ApplicationService, IGameAppService
     public async Task<GameDto> GetAsync(Guid id)
     {
         var game = await this._games.GetAsync(id);
-        return this.ObjectMapper.Map<Game, GameDto>(game);
+        return new GameDto
+        {
+            Id = game.Id,
+            Height = game.Height,
+            Width = game.Width,
+            FlagsAvailable = game.AvailableFlags,
+            Flagged = this.ObjectMapper.Map<ISet<MinePosition>, ICollection<FlaggedPositionDto>>(game.FlaggedMines),
+            Revealed = this.ObjectMapper.Map<ISet<RevealedPosition>, ICollection<RevealedPositionDto>>(game.Revealed)
+        };
     }
 
     public async Task<GameDto> CreateAsync(CreateGameDto input)
@@ -29,7 +38,22 @@ public class GameAppService : ApplicationService, IGameAppService
         return this.ObjectMapper.Map<Game, GameDto>(game);
     }
 
-    public async Task<GameStateChangeDto> RevealAsync(RevealDto input)
+    public async Task<FlagGameStateChangeDto> FlagAsync(FlagDto input)
+    {
+        var game = await this._games.GetAsync(input.GameId);
+
+        var revealed = await this._gameManager.RevealPosition(game, input.X, input.Y);
+
+        var won = game.CorrectlyFlagged == game.FlaggedMines.Count;
+
+        return new FlagGameStateChangeDto
+        {
+            Lost = false,
+            Won = won
+        };
+    }
+
+    public async Task<RevealGameStateChangeDto> RevealAsync(RevealDto input)
     {
         var game = await this._games.GetAsync(input.GameId);
         var revealed = await this._gameManager.RevealPosition(game, input.X, input.Y);
@@ -44,7 +68,7 @@ public class GameAppService : ApplicationService, IGameAppService
 
         // TODO: Write checking if won
 
-        return new GameStateChangeDto
+        return new RevealGameStateChangeDto
         {
             Lost = lost,
             Won = won,
