@@ -16,19 +16,27 @@ public class Game : Entity<Guid>
         int width,
         int height,
         [NotNull] ISet<MinePosition> mines,
-        [NotNull] ISet<RevealedPosition> revealed) : base(id)
+        [NotNull] ISet<RevealedPosition> revealed,
+        [NotNull] ISet<MinePosition> flaggedMines) : base(id)
     {
         this.Width = width;
         this.Height = height;
         this.Mines = mines;
         this.Revealed = revealed;
+        this.FlaggedMines = flaggedMines;
     }
 
     public int Width { get; set; }
 
     public int Height { get; set; }
 
+    public int AvailableFlags { get; set; }
+
+    public int CorrectlyFlagged { get; set; }
+
     public ISet<MinePosition> Mines { get; set; }
+
+    public ISet<MinePosition> FlaggedMines { get; set; }
 
     public ISet<RevealedPosition> Revealed { get; set; }
 }

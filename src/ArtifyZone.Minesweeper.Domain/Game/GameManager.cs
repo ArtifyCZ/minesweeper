@@ -10,10 +10,7 @@ namespace ArtifyZone.Minesweeper.Game;
 
 public class GameManager : DomainService
 {
-    public Task<Game> CreateAsync(
-        int width,
-        int height,
-        [NotNull] ISet<MinePosition> mines)
+    public Task<Game> CreateAsync(int width, int height, [NotNull] ISet<MinePosition> mines)
     {
         Check.NotNull(mines, nameof(mines));
 
@@ -29,11 +26,14 @@ public class GameManager : DomainService
 
         var revealed = new HashSet<RevealedPosition>();
 
+        var flagged = new HashSet<MinePosition>();
+
         return Task.FromResult(new Game(this.GuidGenerator.Create(),
             width,
             height,
             mines,
-            revealed));
+            revealed,
+            flagged));
     }
 
     public Task<ISet<MinePosition>> GenerateMinesAsync(int width, int height, int mines)
@@ -63,6 +63,46 @@ public class GameManager : DomainService
         }
 
         return Task.FromResult<ISet<MinePosition>>(positions);
+    }
+
+    public Task ToggleFlagOnPosAsync([NotNull] Game game, int x, int y)
+    {
+        Check.NotNull(game, nameof(game));
+        Check.Range(x, nameof(x), 0, game.Width);
+        Check.Range(y, nameof(y), 0, game.Height);
+
+        var pos = new MinePosition(x, y);
+
+        if (game.FlaggedMines.Contains(pos))
+        {
+            game.AvailableFlags++;
+
+            if (game.Mines.Contains(pos))
+            {
+                game.CorrectlyFlagged--;
+            }
+
+            game.FlaggedMines.Remove(pos);
+        }
+        else
+        {
+            if (game.AvailableFlags <= 0)
+            {
+                game.AvailableFlags = 0;
+                throw new InsufficientAvailableFlagsException(game.Id);
+            }
+
+            game.AvailableFlags--;
+
+            if (game.Mines.Contains(pos))
+            {
+                game.CorrectlyFlagged++;
+            }
+
+            game.FlaggedMines.Add(pos);
+        }
+
+        return Task.CompletedTask;
     }
 
     public async Task<RevealedPosition> RevealPosition(Game game, int x, int y)

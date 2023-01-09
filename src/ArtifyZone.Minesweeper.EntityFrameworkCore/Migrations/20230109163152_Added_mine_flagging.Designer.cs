@@ -3,6 +3,7 @@ using System;
 using ArtifyZone.Minesweeper.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace ArtifyZone.Minesweeper.Migrations
 {
     [DbContext(typeof(MinesweeperDbContext))]
-    partial class MinesweeperDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230109163152_Added_mine_flagging")]
+    partial class Addedmineflagging
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,9 +33,6 @@ namespace ArtifyZone.Minesweeper.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<int>("AvailableFlags")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CorrectlyFlagged")
                         .HasColumnType("integer");
 
                     b.Property<int>("Height")

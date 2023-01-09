@@ -2,5 +2,5 @@
 
 public static class MinesweeperDomainErrorCodes
 {
-    /* You can add your business exception error codes here, as constants */
+    public const string InsufficientAvailableFlags = "Minesweeper:00001";
 }
