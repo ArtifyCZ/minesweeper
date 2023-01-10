@@ -36,6 +36,8 @@ public class MinesweeperDbContext :
 
     public DbSet<RevealedPosition> RevealedPositions { get; set; }
 
+    public DbSet<FlaggedPosition> FlaggedMines { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -55,6 +57,12 @@ public class MinesweeperDbContext :
         {
             b.ToTable(MinesweeperConsts.DbTablePrefix + "Games", MinesweeperConsts.DbSchema);
             b.ConfigureByConvention();
+            b.HasMany(g => g.Mines).WithOne();
+            b.HasMany(g => g.Revealed).WithOne();
+            b.HasMany(g => g.FlaggedMines).WithOne();
+            b.Navigation(g => g.Mines).AutoInclude();
+            b.Navigation(g => g.Revealed).AutoInclude();
+            b.Navigation(g => g.FlaggedMines).AutoInclude();
         });
 
         builder.Entity<MinePosition>(b =>
@@ -66,6 +74,12 @@ public class MinesweeperDbContext :
         builder.Entity<RevealedPosition>(b =>
         {
             b.ToTable(MinesweeperConsts.DbTablePrefix + "RevealedPositions", MinesweeperConsts.DbSchema);
+            b.ConfigureByConvention();
+        });
+
+        builder.Entity<FlaggedPosition>(b =>
+        {
+            b.ToTable(MinesweeperConsts.DbTablePrefix + "FlaggedPositions", MinesweeperConsts.DbSchema);
             b.ConfigureByConvention();
         });
     }

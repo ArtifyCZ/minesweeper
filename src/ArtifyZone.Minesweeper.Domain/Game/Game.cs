@@ -16,13 +16,15 @@ public class Game : Entity<Guid>
         bool running,
         int width,
         int height,
-        [NotNull] ISet<MinePosition> mines,
-        [NotNull] ISet<RevealedPosition> revealed,
-        [NotNull] ISet<MinePosition> flaggedMines) : base(id)
+        [NotNull] ICollection<MinePosition> mines,
+        [NotNull] ICollection<RevealedPosition> revealed,
+        [NotNull] ICollection<FlaggedPosition> flaggedMines) : base(id)
     {
         this.Running = running;
         this.Width = width;
         this.Height = height;
+        this.AvailableFlags = mines.Count;
+        this.CorrectlyFlagged = 0;
         this.Mines = mines;
         this.Revealed = revealed;
         this.FlaggedMines = flaggedMines;
@@ -38,9 +40,9 @@ public class Game : Entity<Guid>
 
     public int CorrectlyFlagged { get; set; }
 
-    public ISet<MinePosition> Mines { get; set; }
+    public ICollection<MinePosition> Mines { get; set; }
 
-    public ISet<MinePosition> FlaggedMines { get; set; }
+    public ICollection<FlaggedPosition> FlaggedMines { get; set; }
 
-    public ISet<RevealedPosition> Revealed { get; set; }
+    public ICollection<RevealedPosition> Revealed { get; set; }
 }

@@ -1,0 +1,20 @@
+@inherits MinesweeperComponentBase
+
+<div style="width: @(Width.ToString())px; height: @(Height.ToString())px;
+            background-color: #4fcdde"
+     @oncontextmenu:preventDefault="true">
+    @(MinesAround.ToString())
+</div>
+
+@code {
+
+    [Parameter]
+    public int Width { get; set; }
+
+    [Parameter]
+    public int Height { get; set; }
+
+    [Parameter]
+    public int MinesAround { get; set; }
+
+}

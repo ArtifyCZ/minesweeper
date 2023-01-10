@@ -10,7 +10,7 @@ namespace ArtifyZone.Minesweeper.Game;
 
 public class GameManager : DomainService
 {
-    public Task<Game> CreateAsync(int width, int height, [NotNull] ISet<MinePosition> mines)
+    public Task<Game> CreateAsync(int width, int height, [NotNull] ICollection<MinePosition> mines)
     {
         Check.NotNull(mines, nameof(mines));
 
@@ -24,9 +24,9 @@ public class GameManager : DomainService
             Check.Range(mine.Y, nameof(mines), 0, height);
         }
 
-        var revealed = new HashSet<RevealedPosition>();
+        var revealed = new List<RevealedPosition>();
 
-        var flagged = new HashSet<MinePosition>();
+        var flagged = new List<FlaggedPosition>();
 
         return Task.FromResult(new Game(this.GuidGenerator.Create(),
             true,
@@ -37,14 +37,14 @@ public class GameManager : DomainService
             flagged));
     }
 
-    public Task<ISet<MinePosition>> GenerateMinesAsync(int width, int height, int mines)
+    public Task<ICollection<MinePosition>> GenerateMinesAsync(int width, int height, int mines)
     {
         Check.Range(width, nameof(width), GameConsts.MinGameWidth, GameConsts.MaxGameWidth);
         Check.Range(height, nameof(height), GameConsts.MinGameHeight, GameConsts.MaxGameHeight);
         Check.Range(mines, nameof(mines), GameConsts.MinMines, GameConsts.MaxMines(width, height));
 
         var rnd = new Random();
-        var positions = new HashSet<MinePosition>(mines);
+        var positions = new List<MinePosition>(mines);
 
         var m = 0;
         while (m < mines)
@@ -52,18 +52,18 @@ public class GameManager : DomainService
             var x = rnd.Next(0, width);
             var y = rnd.Next(0, height);
 
-            var position = new MinePosition(x, y);
-
-            if (positions.Contains(position))
+            if (positions.FirstOrDefault(pos => pos.X == x && pos.Y == y) is not null)
             {
                 continue;
             }
+
+            var position = new MinePosition(Guid.NewGuid(), x, y);
 
             positions.Add(position);
             m++;
         }
 
-        return Task.FromResult<ISet<MinePosition>>(positions);
+        return Task.FromResult<ICollection<MinePosition>>(positions);
     }
 
     public Task ToggleFlagOnPosAsync([NotNull] Game game, int x, int y)
@@ -72,13 +72,13 @@ public class GameManager : DomainService
         Check.Range(x, nameof(x), 0, game.Width);
         Check.Range(y, nameof(y), 0, game.Height);
 
-        var pos = new MinePosition(x, y);
+        var pos = game.FlaggedMines.FirstOrDefault(pos => pos.X == x && pos.Y == y);
 
-        if (game.FlaggedMines.Contains(pos))
+        if (pos is not null)
         {
             game.AvailableFlags++;
 
-            if (game.Mines.Contains(pos))
+            if (game.Mines.Any(pos => pos.X == x && pos.Y == y))
             {
                 game.CorrectlyFlagged--;
             }
@@ -93,9 +93,11 @@ public class GameManager : DomainService
                 throw new InsufficientAvailableFlagsException(game.Id);
             }
 
+            pos = new FlaggedPosition(Guid.NewGuid(), x, y);
+
             game.AvailableFlags--;
 
-            if (game.Mines.Contains(pos))
+            if (game.Mines.Any(mine => mine.X == x && mine.Y == y))
             {
                 game.CorrectlyFlagged++;
             }
@@ -108,27 +110,21 @@ public class GameManager : DomainService
 
     public async Task<RevealedPosition> RevealPositionAsync(Game game, int x, int y)
     {
-        if (game.Mines.Contains(new MinePosition(x, y)))
+        if (game.Revealed.Any(pos => pos.X == x && pos.Y == y))
         {
-            return new RevealedPosition
-            {
-                Mine = true,
-                X = x,
-                Y = y,
-                NeighborMines = -1
-            };
+            throw new NotImplementedException();
+        }
+
+        if (game.Mines.Any(pos => pos.X == x && pos.Y == y))
+        {
+            return new RevealedPosition(Guid.NewGuid(), x, y, true, -1);
         }
 
         var neighbors = await this.NeighborPositions(x, y, game.Width, game.Height);
-        var minesAround = neighbors.Count(neighbor => game.Mines.Contains(neighbor));
+        var minesAround = neighbors.Count(neighbor => game.Mines.Any(
+            mine => mine.X == neighbor.X && mine.Y == neighbor.Y));
 
-        return new RevealedPosition
-        {
-            X = x,
-            Y = y,
-            Mine = false,
-            NeighborMines = minesAround
-        };
+        return new RevealedPosition(Guid.NewGuid(), x, y, false, minesAround);
     }
 
     public Task<bool> HasWonAsync(Game game)
@@ -152,6 +148,6 @@ public class GameManager : DomainService
                 new[] { 1, 1 }
             }.Select(pos => new[] { pos[0] + x, pos[1] + y })
             .Where(pos => 0 <= pos[0] && pos[0] < width && 0 <= pos[1] && pos[1] < height)
-            .Select(pos => new MinePosition(pos[0], pos[1])));
+            .Select(pos => new MinePosition(Guid.Empty, pos[0], pos[1])));
     }
 }

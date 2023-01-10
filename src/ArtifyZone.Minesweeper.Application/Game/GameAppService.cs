@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
 
@@ -30,8 +31,10 @@ public class GameAppService : ApplicationService, IGameAppService
             Height = game.Height,
             Width = game.Width,
             FlagsAvailable = game.AvailableFlags,
-            Flagged = this.ObjectMapper.Map<ISet<MinePosition>, ICollection<FlaggedPositionDto>>(game.FlaggedMines),
-            Revealed = this.ObjectMapper.Map<ISet<RevealedPosition>, ICollection<RevealedPositionDto>>(game.Revealed)
+            Flagged =
+                this.ObjectMapper.Map<ICollection<FlaggedPosition>, ICollection<FlaggedPositionDto>>(game.FlaggedMines),
+            Revealed =
+                this.ObjectMapper.Map<ICollection<RevealedPosition>, ICollection<RevealedPositionDto>>(game.Revealed)
         };
     }
 
@@ -40,7 +43,17 @@ public class GameAppService : ApplicationService, IGameAppService
         var mines = await this._gameManager.GenerateMinesAsync(input.Width, input.Height, input.Mines);
         var game = await this._gameManager.CreateAsync(input.Width, input.Height, mines);
         await this._games.InsertAsync(game);
-        return this.ObjectMapper.Map<Game, GameDto>(game);
+        return new GameDto
+        {
+            Id = game.Id,
+            Width = game.Width,
+            Height = game.Height,
+            Won = false,
+            Lost = false,
+            FlagsAvailable = game.AvailableFlags,
+            Flagged = new List<FlaggedPositionDto>(),
+            Revealed = new List<RevealedPositionDto>()
+        };
     }
 
     public async Task<FlagGameStateChangeDto> FlagAsync(FlagDto input)
@@ -52,7 +65,12 @@ public class GameAppService : ApplicationService, IGameAppService
             throw new NotImplementedException();
         }
 
-        var revealed = await this._gameManager.RevealPositionAsync(game, input.X, input.Y);
+        if (game.AvailableFlags <= 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        await this._gameManager.ToggleFlagOnPosAsync(game, input.X, input.Y);
 
         var won = await this._gameManager.HasWonAsync(game);
 
@@ -72,23 +90,29 @@ public class GameAppService : ApplicationService, IGameAppService
             throw new NotImplementedException();
         }
 
-        var revealed = await this._gameManager.RevealPositionAsync(game, input.X, input.Y);
-
-        var lost = false;
-        var won = false;
-
-        if (revealed.Mine)
+        if (game.Revealed.Any(pos => pos.X == input.X && pos.Y == input.Y))
         {
-            lost = true;
+            throw new NotImplementedException();
         }
 
-        won = await this._gameManager.HasWonAsync(game);
+        var revealed = await this._gameManager.RevealPositionAsync(game, input.X, input.Y);
+
+        var lost = revealed.Mine;
+
+        var won = await this._gameManager.HasWonAsync(game);
 
         return new RevealGameStateChangeDto
         {
             Lost = lost,
             Won = won,
-            Revealed = this.ObjectMapper.Map<RevealedPosition, RevealedPositionDto>(revealed)
+            Revealed = new RevealedPositionDto
+            {
+                Id = revealed.Id,
+                X = revealed.X,
+                Y = revealed.Y,
+                Mine = revealed.Mine,
+                NeighborMines = revealed.NeighborMines
+            }
         };
     }
 }

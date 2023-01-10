@@ -3,13 +3,13 @@ using Volo.Abp.Domain.Entities;
 
 namespace ArtifyZone.Minesweeper.Game;
 
-public class MinePosition : Entity<Guid>
+public class FlaggedPosition : Entity<Guid>
 {
-    private MinePosition()
+    private FlaggedPosition()
     {
     }
 
-    public MinePosition(Guid id, int x, int y) : base(id)
+    public FlaggedPosition(Guid id, int x, int y) : base(id)
     {
         this.X = x;
         this.Y = y;

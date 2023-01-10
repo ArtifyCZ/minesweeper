@@ -1,0 +1,19 @@
+@inherits MinesweeperComponentBase
+
+<div style="width: @(Width.ToString())px; height: @(Height.ToString())px;
+            background-color: #d99c42"
+     @oncontextmenu="OnRightClick" @oncontextmenu:preventDefault="true">
+</div>
+
+@code {
+
+    [Parameter]
+    public Action OnRightClick { get; set; }
+
+    [Parameter]
+    public int Width { get; set; }
+
+    [Parameter]
+    public int Height { get; set; }
+
+}

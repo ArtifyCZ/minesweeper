@@ -1,6 +1,9 @@
+using System;
+using Volo.Abp.Application.Dtos;
+
 namespace ArtifyZone.Minesweeper.Game;
 
-public class RevealedPositionDto
+public class RevealedPositionDto : EntityDto<Guid>
 {
     public int X { get; set; }
 

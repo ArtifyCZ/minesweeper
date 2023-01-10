@@ -1,6 +1,163 @@
+@using ArtifyZone.Minesweeper.Game
 @inherits MinesweeperComponentBase
+@inject IGameAppService GameAppService
+@inject IJSRuntime JsRuntime
 
 <h3>Game</h3>
 
+<button @onclick="newGame">New Game</button>
+
+<span>Available flags: @(AvailableFlags.ToString())</span>
+
+<table style="padding: 0 !important; margin: 0 !important;"
+       @oncontextmenu:preventDefault="true">
+    @for (var _y = 0; _y < Height; _y++)
+    {
+        <tr>
+            @for (var _x = 0; _x < Width; _x++)
+            {
+                var x = _x;
+                var y = _y;
+                var w = 20;
+                var h = 20;
+                var val = GameField[x][y];
+                var onClick = () => revealCell(x, y);
+                var onRightClick = () => flagCell(x, y);
+
+                <td>
+                    @(val switch
+                    {
+                        -1 => (@<HiddenCell Width="w" Height="h" OnClick="onClick" OnRightClick="onRightClick"/>),
+                        -2 => (@<MineCell Width="w" Height="h"/>),
+                        -3 => (@<FlaggedCell Width="w" Height="h" OnRightClick="onRightClick"/>),
+                        >= 0 and < 9 => (@<RevealedCell Width="w" Height="h" MinesAround="val"/>)
+                        })
+                </td>
+            }
+        </tr>
+    }
+</table>
+
 @code {
+    private Guid GameId { get; set; }
+
+    private int Width { get; set; }
+
+    private int Height { get; set; }
+
+    private int[][] GameField { get; set; }
+
+    private int AvailableFlags { get; set; }
+
+    private bool GameEnded { get; set; }
+
+    private async Task newGame()
+    {
+        const int width = 10;
+        const int height = 5;
+        const int mines = 8;
+
+        var game = await GameAppService.CreateAsync(new CreateGameDto
+        {
+            Height = height,
+            Width = width,
+            Mines = mines
+        });
+
+        GameId = game.Id;
+        Width = game.Width;
+        Height = game.Height;
+
+        GameEnded = false;
+
+        AvailableFlags = game.FlagsAvailable;
+
+        GameField = new int[Width][];
+        for (var x = 0; x < width; x++)
+        {
+            GameField[x] = new int[Height];
+            for (var y = 0; y < height; y++)
+            {
+                GameField[x][y] = -1;
+            }
+        }
+    }
+
+    private void revealCell(int x, int y)
+    {
+        if (GameEnded)
+        {
+            return;
+        }
+
+        Task.Run(async () =>
+        {
+            var data = await GameAppService.RevealAsync(new RevealDto
+            {
+                GameId = GameId,
+                X = x,
+                Y = y
+            });
+
+            var revealed = data.Revealed;
+
+            if (revealed.Mine)
+            {
+                GameField[x][y] = -2;
+            }
+            else
+            {
+                GameField[x][y] = revealed.NeighborMines;
+            }
+
+            if (data.Won || data.Lost)
+            {
+                await EndGame(data.Won);
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private void flagCell(int x, int y)
+    {
+        if (GameEnded)
+        {
+            return;
+        }
+
+        Task.Run(async () =>
+        {
+            if (AvailableFlags <= 0)
+            {
+                await JsRuntime.InvokeVoidAsync("alert", "Insufficient available flags.");
+                return;
+            }
+
+            var data = await GameAppService.FlagAsync(new FlagDto
+            {
+                GameId = GameId,
+                X = x,
+                Y = y
+            });
+
+            GameField[x][y] = -3;
+
+            AvailableFlags--;
+
+            if (data.Won || data.Lost)
+            {
+                await EndGame(data.Won);
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private async Task EndGame(bool won)
+    {
+        GameEnded = true;
+        await JsRuntime.InvokeVoidAsync("alert", won ? "You won!" : "Game over!");
+    }
+
 }

@@ -3,6 +3,7 @@ using System;
 using ArtifyZone.Minesweeper.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace ArtifyZone.Minesweeper.Migrations
 {
     [DbContext(typeof(MinesweeperDbContext))]
-    partial class MinesweeperDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230110110114_Fixed_foreign_navigation")]
+    partial class Fixedforeignnavigation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
