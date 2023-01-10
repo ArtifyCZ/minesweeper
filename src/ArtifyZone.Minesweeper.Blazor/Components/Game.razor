@@ -38,6 +38,30 @@
     }
 </table>
 
+<Modal @ref="EndModal">
+    <ModalContent Centered>
+        <ModalBody>
+            @if (Won)
+            {
+                <h3 style="color: #1c731c">
+                    You won!
+                </h3>
+            }
+            else
+            {
+                <h3 style="color: #b6350d">
+                    Game over!
+                </h3>
+            }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@(() => Task.Run(EndModal.Hide))">
+                Close
+            </Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
 @code {
     private Guid GameId { get; set; }
 
@@ -50,6 +74,10 @@
     private int AvailableFlags { get; set; }
 
     private bool GameEnded { get; set; }
+
+    private Modal EndModal { get; set; }
+
+    private bool Won { get; set; }
 
     private async Task newGame()
     {
@@ -157,7 +185,8 @@
     private async Task EndGame(bool won)
     {
         GameEnded = true;
-        await JsRuntime.InvokeVoidAsync("alert", won ? "You won!" : "Game over!");
+        Won = won;
+        await EndModal.Show();
     }
 
 }
